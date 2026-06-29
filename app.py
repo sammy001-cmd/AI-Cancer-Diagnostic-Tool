@@ -11,7 +11,7 @@ st.set_page_config(page_title="Oncology AI Portal", page_icon="🧬", layout="wi
 
 # --- ULTIMATE PREMIUM CSS (Tailwind/Inter Font/Glassmorphism) ---
 css_styling = """<style>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght=300;400;600;800&display=swap');
 html, body, [class*="css"] { font-family: 'Inter', sans-serif; }
 .stApp { background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%, #000000 100%); color: #f8fafc; }
 [data-testid="stHeader"] { background-color: transparent !important; }
@@ -21,8 +21,21 @@ h1 { background: -webkit-linear-gradient(45deg, #38bdf8, #c084fc); -webkit-backg
 
 /* Customizing the Streamlit Progress Bar to fit the theme */
 .stProgress > div > div > div > div { background-image: linear-gradient(to right, #38bdf8, #c084fc); }
+
+/* Custom style for the sample cards */
+.sample-box {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    padding: 10px;
+    text-align: center;
+}
 </style>"""
 st.markdown(css_styling, unsafe_allow_html=True)
+
+# --- SESSION STATE INITIALIZATION ---
+if "selected_sample" not in st.session_state:
+    st.session_state.selected_sample = None
 
 # --- MAIN HEADER ---
 st.title("🧬 Diagnostic Intelligence")
@@ -44,20 +57,89 @@ with st.sidebar:
     st.markdown("<h2 style='color: #e2e8f0; font-weight: 600;'>📤 Input Parameters</h2>", unsafe_allow_html=True)
     uploaded_file = st.file_uploader("Select Tissue Scan", type=["jpg", "png", "jpeg"])
     
-    st.markdown("---")
+    # If the user uploads a fresh file, override and clear any selected sample preset
+    if uploaded_file is not None:
+        st.session_state.selected_sample = None
+        
+    if st.session_state.selected_sample is not None:
+        st.sidebar.success(f"Selected: {os.path.basename(st.session_state.selected_sample)}")
+        if st.button("Clear Selected Sample"):
+            st.session_state.selected_sample = None
+            st.rerun()
     
-    # Back to the simple, clean info box!
+    st.markdown("---")
     st.info("💡 **Note:** This AI was trained only on microscopic tissue scans. Please do not upload human faces, cars, or dogs!")
-    
     st.markdown("---")
-    
-    # Simple, clean disclaimer moved to the sidebar
     st.caption("Disclaimer: This is a student computer science project for educational purposes. It utilizes a prototype Artificial Intelligence model and is strictly not intended for medical diagnosis.")
 
+# --- ROUTING LOGIC FOR IMAGE INPUT ---
+input_img = None
+
+# Prioritize real upload over sample gallery selection
+if uploaded_file is not None:
+    input_img = Image.open(uploaded_file)
+elif st.session_state.selected_sample is not None:
+    if os.path.exists(st.session_state.selected_sample):
+        input_img = Image.open(st.session_state.selected_sample)
+    else:
+        st.error(f"Sample file missing at {st.session_state.selected_sample}")
+
 # --- MAIN DASHBOARD LAYOUT ---
-if uploaded_file is None:
-    awaiting_img = "<div style='background: rgba(255, 255, 255, 0.02); border: 1px dashed rgba(255, 255, 255, 0.1); border-radius: 16px; padding: 40px; text-align: center; margin-top: 30px;'><p style='font-size: 3em; margin-bottom: 0;'>🔬</p><h3 style='color: #94a3b8; font-weight: 400; margin-top: 10px;'>Awaiting Image Input</h3><p style='color: #64748b; font-size: 0.9em;'>Please select an image file from the sidebar to initialize the neural network.</p></div>"
+if input_img is None:
+    awaiting_img = "<div style='background: rgba(255, 255, 255, 0.02); border: 1px dashed rgba(255, 255, 255, 0.1); border-radius: 16px; padding: 40px; text-align: center; margin-top: 30px;'><p style='font-size: 3em; margin-bottom: 0;'>🔬</p><h3 style='color: #94a3b8; font-weight: 400; margin-top: 10px;'>Awaiting Image Input</h3><p style='color: #64748b; font-size: 0.9em;'>Please select an image file from the sidebar or pick a quick test sample below to initialize the neural network.</p></div>"
     st.markdown(awaiting_img, unsafe_allow_html=True)
+    
+    st.markdown("<br/><h3 style='color: #e2e8f0; font-weight: 600; font-size: 1.2em; text-align: center;'>⚡ Fast Track: Try a Microscopic Tissue Sample</h3>", unsafe_allow_html=True)
+    
+    # Grid initialization with your exact absolute Windows file paths
+    # Grid initialization - Add as many paths here as you want!
+    # Grid initialization with RELATIVE paths
+    samples = [
+        {"path": "samples/603.jpg", "label": "Sample A (Benign)"},
+        # {"path": "samples/91.jpg", "label": "Sample B (Malignant)"},
+        {"path": "samples/612.jpg", "label": "Sample B (Benign)"},
+        {"path": "samples/623.jpg", "label": "Sample C (Benign)"},
+        {"path": "samples/624.jpg", "label": "Sample D (Benign)"},
+        {"path": "samples/626.jpg", "label": "Sample E (Benign)"},
+        {"path": "samples/678.jpg", "label": "Sample F (Benign)"},
+        {"path": "samples/681.jpg", "label": "Sample G (Benign)"},
+        {"path": "samples/689.jpg", "label": "Sample H (Benign)"},
+        {"path": "samples/690.jpg", "label": "Sample I (Benign)"},
+        {"path": "samples/700.jpg", "label": "Sample J (Benign)"},
+        {"path": "samples/511.jpg", "label": "Sample K (Malignant)"},
+        {"path": "samples/519.jpg", "label": "Sample L (Malignant)"},
+        {"path": "samples/528.jpg", "label": "Sample M (Malignant)"},
+        {"path": "samples/536.jpg", "label": "Sample N (Malignant)"},
+        {"path": "samples/572.jpg", "label": "Sample O (Malignant)"},
+        {"path": "samples/573.jpg", "label": "Sample P (Malignant)"},
+        {"path": "samples/575.jpg", "label": "Sample Q (Malignant)"},
+        {"path": "samples/590.jpg", "label": "Sample R (Malignant)"},
+        {"path": "samples/1320.jpg", "label": "Sample S (Malignant)"},
+        {"path": "samples/1358.jpg", "label": "Sample T (Malignant)"}
+        
+    ]
+    
+    # Dynamic Layout: Display 3 images per row
+    columns_per_row = 5
+    
+    # Break the samples list into chunks of 3
+    for i in range(0, len(samples), columns_per_row):
+        row_samples = samples[i:i + columns_per_row]
+        cols = st.columns(columns_per_row, gap="medium")
+        
+        for j, sample in enumerate(row_samples):
+            # Calculate a unique index for the session state keys
+            global_idx = i + j 
+            
+            with cols[j]:
+                if os.path.exists(sample["path"]):
+                    st.image(sample["path"], use_column_width=True)
+                else:
+                    st.markdown(f"<div class='sample-box'><p style='color:#64748b;'>[ Image asset missing ]<br/>{sample['path']}</p></div>", unsafe_allow_html=True)
+                
+                if st.button(f"Analyze {sample['label']}", key=f"sample_btn_{global_idx}"):
+                    st.session_state.selected_sample = sample["path"]
+                    st.rerun()
 
 else:
     st.write("<br/>", unsafe_allow_html=True)
@@ -65,7 +147,7 @@ else:
 
     with col1:
         st.markdown("<h3 style='color: #e2e8f0; font-weight: 600; font-size: 1.2em;'>Input Vision</h3>", unsafe_allow_html=True)
-        input_img = Image.open(uploaded_file)
+        # Fixed: Changed from use_container_width=True to use_column_width=True
         st.image(input_img, use_column_width=True) 
 
     with col2:
@@ -75,45 +157,163 @@ else:
         status_text = st.empty()
         loading_bar = st.progress(0)
         
-        # Simulate deep scanning process for UI UX
         loading_messages = ["Extracting spatial features...", "Analyzing pixel density...", "Computing neural pathways...", "Finalizing tensor logic..."]
         for i in range(100):
             if i % 25 == 0:
                 st_msg = f"<p style='color: #38bdf8; font-family: monospace; margin-bottom: 5px;'>[PROCESS] {loading_messages[i//25]}</p>"
                 status_text.markdown(st_msg, unsafe_allow_html=True)
             loading_bar.progress(i + 1)
-            time.sleep(0.01) # Tiny pause to create visual effect
+            time.sleep(0.01) 
             
         status_text.empty()
         loading_bar.empty()
 
-        # Actual Prediction
+        # Actual Prediction Processing
         processed_img = input_img.resize((128, 128))
         img_matrix = image.img_to_array(processed_img)
         img_matrix = np.expand_dims(img_matrix, axis=0)
         img_matrix /= 255.0
-        prediction_score = cnn_engine.predict(img_matrix)[0][0]
         
-        # --- DISPLAY RESULTS ---
-        if prediction_score > 0.5:
-            confidence = prediction_score * 100
+        if cnn_engine is not None:
+            prediction_score = cnn_engine.predict(img_matrix)[0][0]
             
-            malignant_banner = "<div style='background: rgba(239, 68, 68, 0.08); backdrop-filter: blur(16px); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 16px; padding: 25px; box-shadow: 0 4px 30px rgba(239, 68, 68, 0.1); margin-bottom: 20px;'><h2 style='color: #fca5a5; margin-top: 0; font-weight: 800; font-size: 2em; letter-spacing: -1px;'>MALIGNANT</h2><p style='color: #f8fafc; margin-bottom: 0; font-size: 0.95em;'>High probability of cancerous cell proliferation detected.</p></div>"
-            st.markdown(malignant_banner, unsafe_allow_html=True)
-            
-            # Bringing back the clean progress bar you liked
-            st.markdown(f"<p style='color: #cbd5e1; font-weight: 600; margin-bottom: 5px;'>Confidence Score: <span style='color: #fca5a5;'>{confidence:.2f}%</span></p>", unsafe_allow_html=True)
-            st.progress(int(confidence))
-            
+            # --- DISPLAY RESULTS ---
+            if prediction_score > 0.5:
+                confidence = prediction_score * 100
+                
+                malignant_banner = "<div style='background: rgba(239, 68, 68, 0.08); backdrop-filter: blur(16px); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 16px; padding: 25px; box-shadow: 0 4px 30px rgba(239, 68, 68, 0.1); margin-bottom: 20px;'><h2 style='color: #fca5a5; margin-top: 0; font-weight: 800; font-size: 2em; letter-spacing: -1px;'>MALIGNANT</h2><p style='color: #f8fafc; margin-bottom: 0; font-size: 0.95em;'>High probability of cancerous cell proliferation detected.</p></div>"
+                st.markdown(malignant_banner, unsafe_allow_html=True)
+                
+                st.markdown(f"<p style='color: #cbd5e1; font-weight: 600; margin-bottom: 5px;'>Confidence Score: <span style='color: #fca5a5;'>{confidence:.2f}%</span></p>", unsafe_allow_html=True)
+                st.progress(int(confidence))
+                
+            else:
+                confidence = (1 - prediction_score) * 100
+                
+                benign_banner = "<div style='background: rgba(34, 197, 94, 0.08); backdrop-filter: blur(16px); border: 1px solid rgba(34, 197, 94, 0.3); border-radius: 16px; padding: 25px; box-shadow: 0 4px 30px rgba(34, 197, 94, 0.1); margin-bottom: 20px;'><h2 style='color: #86efac; margin-top: 0; font-weight: 800; font-size: 2em; letter-spacing: -1px;'>BENIGN</h2><p style='color: #f8fafc; margin-bottom: 0; font-size: 0.95em;'>Cellular patterns align with normal, healthy tissue architecture.</p></div>"
+                st.markdown(benign_banner, unsafe_allow_html=True)
+                
+                st.markdown(f"<p style='color: #cbd5e1; font-weight: 600; margin-bottom: 5px;'>Confidence Score: <span style='color: #86efac;'>{confidence:.2f}%</span></p>", unsafe_allow_html=True)
+                st.progress(int(confidence))
         else:
-            confidence = (1 - prediction_score) * 100
+            st.error("Engine Offline: Prediction engine failed to initialize.")
+
+# import streamlit as st
+# import numpy as np
+# from tensorflow.keras.preprocessing import image
+# from tensorflow.keras.models import load_model
+# from PIL import Image
+# import os
+# import time
+
+# # 1. Page Configuration
+# st.set_page_config(page_title="Oncology AI Portal", page_icon="🧬", layout="wide")
+
+# # --- ULTIMATE PREMIUM CSS (Tailwind/Inter Font/Glassmorphism) ---
+# css_styling = """<style>
+# @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap');
+# html, body, [class*="css"] { font-family: 'Inter', sans-serif; }
+# .stApp { background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%, #000000 100%); color: #f8fafc; }
+# [data-testid="stHeader"] { background-color: transparent !important; }
+# [data-testid="stSidebar"] { background: rgba(15, 23, 42, 0.4) !important; backdrop-filter: blur(16px) !important; -webkit-backdrop-filter: blur(16px) !important; border-right: 1px solid rgba(255, 255, 255, 0.05) !important; }
+# [data-testid="stImage"] > img { border-radius: 16px; border: 1px solid rgba(255, 255, 255, 0.1); box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4); }
+# h1 { background: -webkit-linear-gradient(45deg, #38bdf8, #c084fc); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 800 !important; padding-bottom: 10px; letter-spacing: -1px; }
+
+# /* Customizing the Streamlit Progress Bar to fit the theme */
+# .stProgress > div > div > div > div { background-image: linear-gradient(to right, #38bdf8, #c084fc); }
+# </style>"""
+# st.markdown(css_styling, unsafe_allow_html=True)
+
+# # --- MAIN HEADER ---
+# st.title("🧬 Diagnostic Intelligence")
+# st.markdown("<p style='color: #94a3b8; font-size: 1.1em; font-weight: 300;'>Advanced histological pattern recognition powered by Deep Learning.</p>", unsafe_allow_html=True)
+
+# # 2. Secure Model Loader
+# @st.cache_resource
+# def initialize_diagnostic_engine():
+#     model_path = 'cancer_diagnostic_model.h5'
+#     if not os.path.exists(model_path):
+#         st.error(f"⚠️ Missing Model: Could not find '{model_path}'.")
+#         return None
+#     return load_model(model_path)
+
+# cnn_engine = initialize_diagnostic_engine()
+
+# # --- SIDEBAR LAYOUT ---
+# with st.sidebar:
+#     st.markdown("<h2 style='color: #e2e8f0; font-weight: 600;'>📤 Input Parameters</h2>", unsafe_allow_html=True)
+#     uploaded_file = st.file_uploader("Select Tissue Scan", type=["jpg", "png", "jpeg"])
+    
+#     st.markdown("---")
+    
+#     # Back to the simple, clean info box!
+#     st.info("💡 **Note:** This AI was trained only on microscopic tissue scans. Please do not upload human faces, cars, or dogs!")
+    
+#     st.markdown("---")
+    
+#     # Simple, clean disclaimer moved to the sidebar
+#     st.caption("Disclaimer: This is a student computer science project for educational purposes. It utilizes a prototype Artificial Intelligence model and is strictly not intended for medical diagnosis.")
+
+# # --- MAIN DASHBOARD LAYOUT ---
+# if uploaded_file is None:
+#     awaiting_img = "<div style='background: rgba(255, 255, 255, 0.02); border: 1px dashed rgba(255, 255, 255, 0.1); border-radius: 16px; padding: 40px; text-align: center; margin-top: 30px;'><p style='font-size: 3em; margin-bottom: 0;'>🔬</p><h3 style='color: #94a3b8; font-weight: 400; margin-top: 10px;'>Awaiting Image Input</h3><p style='color: #64748b; font-size: 0.9em;'>Please select an image file from the sidebar to initialize the neural network.</p></div>"
+#     st.markdown(awaiting_img, unsafe_allow_html=True)
+
+# else:
+#     st.write("<br/>", unsafe_allow_html=True)
+#     col1, col2 = st.columns([1, 1], gap="large") 
+
+#     with col1:
+#         st.markdown("<h3 style='color: #e2e8f0; font-weight: 600; font-size: 1.2em;'>Input Vision</h3>", unsafe_allow_html=True)
+#         input_img = Image.open(uploaded_file)
+#         st.image(input_img, use_column_width=True) 
+
+#     with col2:
+#         st.markdown("<h3 style='color: #e2e8f0; font-weight: 600; font-size: 1.2em;'>Inference Results</h3>", unsafe_allow_html=True)
+        
+#         # --- THE HOLLYWOOD LOADING ANIMATION ---
+#         status_text = st.empty()
+#         loading_bar = st.progress(0)
+        
+#         # Simulate deep scanning process for UI UX
+#         loading_messages = ["Extracting spatial features...", "Analyzing pixel density...", "Computing neural pathways...", "Finalizing tensor logic..."]
+#         for i in range(100):
+#             if i % 25 == 0:
+#                 st_msg = f"<p style='color: #38bdf8; font-family: monospace; margin-bottom: 5px;'>[PROCESS] {loading_messages[i//25]}</p>"
+#                 status_text.markdown(st_msg, unsafe_allow_html=True)
+#             loading_bar.progress(i + 1)
+#             time.sleep(0.01) # Tiny pause to create visual effect
             
-            benign_banner = "<div style='background: rgba(34, 197, 94, 0.08); backdrop-filter: blur(16px); border: 1px solid rgba(34, 197, 94, 0.3); border-radius: 16px; padding: 25px; box-shadow: 0 4px 30px rgba(34, 197, 94, 0.1); margin-bottom: 20px;'><h2 style='color: #86efac; margin-top: 0; font-weight: 800; font-size: 2em; letter-spacing: -1px;'>BENIGN</h2><p style='color: #f8fafc; margin-bottom: 0; font-size: 0.95em;'>Cellular patterns align with normal, healthy tissue architecture.</p></div>"
-            st.markdown(benign_banner, unsafe_allow_html=True)
+#         status_text.empty()
+#         loading_bar.empty()
+
+#         # Actual Prediction
+#         processed_img = input_img.resize((128, 128))
+#         img_matrix = image.img_to_array(processed_img)
+#         img_matrix = np.expand_dims(img_matrix, axis=0)
+#         img_matrix /= 255.0
+#         prediction_score = cnn_engine.predict(img_matrix)[0][0]
+        
+#         # --- DISPLAY RESULTS ---
+#         if prediction_score > 0.5:
+#             confidence = prediction_score * 100
             
-            # Bringing back the clean progress bar you liked
-            st.markdown(f"<p style='color: #cbd5e1; font-weight: 600; margin-bottom: 5px;'>Confidence Score: <span style='color: #86efac;'>{confidence:.2f}%</span></p>", unsafe_allow_html=True)
-            st.progress(int(confidence))
+#             malignant_banner = "<div style='background: rgba(239, 68, 68, 0.08); backdrop-filter: blur(16px); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 16px; padding: 25px; box-shadow: 0 4px 30px rgba(239, 68, 68, 0.1); margin-bottom: 20px;'><h2 style='color: #fca5a5; margin-top: 0; font-weight: 800; font-size: 2em; letter-spacing: -1px;'>MALIGNANT</h2><p style='color: #f8fafc; margin-bottom: 0; font-size: 0.95em;'>High probability of cancerous cell proliferation detected.</p></div>"
+#             st.markdown(malignant_banner, unsafe_allow_html=True)
+            
+#             # Bringing back the clean progress bar you liked
+#             st.markdown(f"<p style='color: #cbd5e1; font-weight: 600; margin-bottom: 5px;'>Confidence Score: <span style='color: #fca5a5;'>{confidence:.2f}%</span></p>", unsafe_allow_html=True)
+#             st.progress(int(confidence))
+            
+#         else:
+#             confidence = (1 - prediction_score) * 100
+            
+#             benign_banner = "<div style='background: rgba(34, 197, 94, 0.08); backdrop-filter: blur(16px); border: 1px solid rgba(34, 197, 94, 0.3); border-radius: 16px; padding: 25px; box-shadow: 0 4px 30px rgba(34, 197, 94, 0.1); margin-bottom: 20px;'><h2 style='color: #86efac; margin-top: 0; font-weight: 800; font-size: 2em; letter-spacing: -1px;'>BENIGN</h2><p style='color: #f8fafc; margin-bottom: 0; font-size: 0.95em;'>Cellular patterns align with normal, healthy tissue architecture.</p></div>"
+#             st.markdown(benign_banner, unsafe_allow_html=True)
+            
+#             # Bringing back the clean progress bar you liked
+#             st.markdown(f"<p style='color: #cbd5e1; font-weight: 600; margin-bottom: 5px;'>Confidence Score: <span style='color: #86efac;'>{confidence:.2f}%</span></p>", unsafe_allow_html=True)
+#             st.progress(int(confidence))
             
             
         
