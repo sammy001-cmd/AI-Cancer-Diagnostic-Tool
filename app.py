@@ -38,9 +38,11 @@ if "selected_sample" not in st.session_state:
     st.session_state.selected_sample = None
 
 # --- MAIN HEADER ---
-st.title("🧬 Diagnostic Intelligence")
-st.markdown("<p style='color: #94a3b8; font-size: 1.1em; font-weight: 300;'>Advanced histological pattern recognition powered by Deep Learning.</p>", unsafe_allow_html=True)
-
+st.title("🧬 AI Cancer Diagnostic System")
+st.markdown(
+    "<p style='color:#94a3b8;font-size:1.1em;'>Deep Learning–Powered Histopathological Image Classification</p>",
+    unsafe_allow_html=True
+)
 # 2. Secure Model Loader
 @st.cache_resource
 def initialize_diagnostic_engine():
@@ -70,8 +72,14 @@ with st.sidebar:
     st.markdown("---")
     st.info("💡 **Note:** This AI was trained only on microscopic tissue scans. Please do not upload human faces, cars, or dogs!")
     st.markdown("---")
-    st.caption("Disclaimer: This is a student computer science project for educational purposes. It utilizes a prototype Artificial Intelligence model and is strictly not intended for medical diagnosis.")
-
+    with st.expander("Model Insights"):
+        st.write("Architecture: Convolutional Neural Network")
+        st.write("Input Resolution: 128 × 128")
+        st.write("Classification: Binary")
+        
+    st.caption(
+    "Educational AI prototype. Not intended for clinical diagnosis."
+)
 # --- ROUTING LOGIC FOR IMAGE INPUT ---
 input_img = None
 
@@ -197,6 +205,10 @@ else:
                 st.progress(int(confidence))
         else:
             st.error("Engine Offline: Prediction engine failed to initialize.")
+            
+            
+            
+            
 
 # import streamlit as st
 # import numpy as np
